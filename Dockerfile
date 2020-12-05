@@ -17,14 +17,6 @@ ARG BUILD_URL
 ARG GIT_COMMIT
 ARG BUILD_TAG
 LABEL com.genesys.pureengage.inboundservice.resiliency.image-name="inboundservice/resiliency" \
-      com.genesys.pureengage.inboundservice.resiliency.bdh-project="PE/inboundservice/resiliency" \
-      com.genesys.pureengage.inboundservice.resiliency.build-link="${BUILD_URL}" \
-      com.genesys.pureengage.inboundservice.resiliency.build-time-iso8601m="${BUILD_TIME}" \
-      com.genesys.pureengage.inboundservice.resiliency.commit-hash="${GIT_COMMIT}" \
-      com.genesys.pureengage.inboundservice.resiliency.fips-enabled="false" \
-      com.genesys.pureengage.inboundservice.resiliency.image-from="${BASE_IMAGE}" \
-      com.genesys.pureengage.inboundservice.resiliency.image-tag="${BUILD_TAG}" \
-      com.genesys.pureengage.inboundservice.resiliency.image-version="${BUILD_TAG}" \
       io.k8s.description="Genesys Inbound resiliency Test services" \
       io.k8s.display-name="Genesys Inbound resiliency Test Service"
 USER root
