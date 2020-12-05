@@ -21,39 +21,12 @@ jobs:
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       #Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@2036a08
-      - uses: actions/checkout@2036a08
-        with:
-          repository: genesysengage/actions
-          ref: 'v1.0.3'
-          token: ${{ secrets.GIT_ACTION_PAT }}
-          path: .engage-actions
-      - uses: actions/checkout@2036a08
-        with:
-          repository: genesysengage/voice-test
-          path: .voice-test
-          token: ${{ secrets.GIT_ACTION_PAT }}
+      - uses: actions/checkout@2036a08    
       - uses: ./.engage-actions/setup-genesysengage
-        env:
-          AZURE_DEV_SECRETS: ${{ secrets.AZURE_DEV_SECRETS }}
-          AZURE_STAGE_SECRETS: ${{ secrets.AZURE_STAGE_SECRETS }}
-          AZURE_PROD001_SECRETS: ${{ secrets.AZURE_PROD001_SECRETS }}
-          GIT_ACTION_PAT: ${{ secrets.GIT_ACTION_PAT }}
-          ARTIFACTORY_STAGING_PASSWORD: ${{ secrets.ARTIFACTORY_STAGING_PASSWORD }}          
-        with:
-          cloud: azure
-          environment: ${{ matrix.environment }}
       - name: Set Context
         run: |
           kubectl config use-context aks01-eastus2-${{ matrix.environment }}
       - name: Updated west values
-        if: contains(matrix.location ,'westus2')
-        run:
-          cp  /home/runner/work/voice_resiliency_test/voice_resiliency_test/azure/dev/westus2/values.yaml  /home/runner/work/voice_resiliency_test/voice_resiliency_test/helm/
-      - name: Updated east values
-        if: contains(matrix.location ,'eastus2')
-        run:
-          cp /home/runner/work/voice_resiliency_test/voice_resiliency_test/azure/dev/eastus2/values.yaml  /home/runner/work/voice_resiliency_test/voice_resiliency_test/helm/
       - name: print values
         run: cat /home/runner/work/voice_resiliency_test/voice_resiliency_test/helm/values.yaml
       - name: Resiliency Pod Deployment
@@ -61,7 +34,8 @@ jobs:
         run: |          
           cd /home/runner/work/voice_resiliency_test/voice_resiliency_test/helm/
           helm install voice-resiliency-test . -n voice --set version="1.0.0"
-          helm test voice-resiliency-test -n voice --timeout 500m
+          helm test voice-resiliency-test -n voice --timeout 500m          
+          
       - uses: ./.voice-test/teams-notification
         env:
           result: "Success"
@@ -71,38 +45,11 @@ jobs:
           environment: ${{ matrix.environment }}
           location: ${{ matrix.location }}
           author: "asmitha.durairaj@genesys.com"          
-          resiliencylog: "<a href='https://portal.azure.com/#blade/Microsoft_Azure_FileStorage/FileShareMenuBlade/overview/storageAccountId/%2Fsubscriptions%2F1649ee20-8f97-4941-be59-cb40e8aaafea%2FresourceGroups%2Fgroup-aks01-eastus2-dev-nodes%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Flogshareeastus2dev/path/logs/protocol/SMB'>RESILIENCY_Log_File_share_path</a>"
-          
-      - uses: ./.voice-test/teams-notification
-        if: ${{ failure() }}
-        env:
-          result: "Failed"
-          activity : "Resiliency Regression Automation"
-          action: "Test"
-          service: "Resiliency-Automation-Pipeline"
-          environment: ${{ matrix.environment }}
-          location: ${{ matrix.location }}        
-          author: "asmitha.durairaj@genesys.com"          
-          resiliencylog: "<a href='https://portal.azure.com/#blade/Microsoft_Azure_FileStorage/FileShareMenuBlade/overview/storageAccountId/%2Fsubscriptions%2F1649ee20-8f97-4941-be59-cb40e8aaafea%2FresourceGroups%2Fgroup-aks01-eastus2-dev-nodes%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Flogshareeastus2dev/path/logs/protocol/SMB'>RESILIENCY Automation Log File share path</a>"
-      - name: Wait for report file to be uploaded to Azure file share
-        if: ${{ always() }}
-        uses: jakejarvis/wait-action@master
-        with:
-         time: '3m'
-      - name: Get Resiliency automation report file and Print pod log
-        if: ${{ always() }}
-        run: |
-          pods=$(kubectl get pods --selector=job-name=voice-resiliency-test-aut --output=jsonpath="{.items[*].metadata.name}" -n voice)
-          echo $pods
-          kubectl logs $pods -n voice >> /home/runner/work/voice_resiliency_test/voice_resiliency_test/log.txt
-          cat /home/runner/work/voice_resiliency_test/voice_resiliency_test/log.txt
-          filename=$(grep "outputPath" /home/runner/work/voice_resiliency_test/voice_resiliency_test/log.txt)
-          echo "Resiliency report filename: ${filename:43:71}"
-          az login --service-principal -u $ARM_CLIENT_ID -p $ARM_CLIENT_SECRET -t $ARM_TENANT_ID
-          account_key=$(az storage account keys list -g group-aks01-eastus2-dev-nodes -n logshareeastus2dev --query [0].value )
-          az storage file download  --account-name logshareeastus2dev  --account-key $account_key  --share-name logs   --path ${filename:43:71}  --dest "/home/runner/work/voice_resiliency_test/voice_resiliency_test/Report/Resiliency-Automation-Report.html"   --output none
+          resiliencylog: "<a href='https://portal.azure.com/#blade/Microsoft_Azure_FileStorage/FileShareMenuBlade/overview/storageAccountId/%2Fsubscriptions%2F1649ee20-8f97-4941-be59-cb40e8aaafea%2FresourceGroups%2Fgroup-aks01-eastus2-dev-nodes%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Flogshareeastus2dev/path/logs/protocol/SMB'>RESILIENCY_Log_File_share_path</a> 
+      
       - name: Delete helm chart
         if: ${{ always() }}
         run: |
           cd /home/runner/work/voice_resiliency_test/voice_resiliency_test/helm/    
           helm delete voice-resiliency-test -n voice
+          
