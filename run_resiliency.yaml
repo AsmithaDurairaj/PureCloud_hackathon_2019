@@ -41,11 +41,6 @@ jobs:
           result: "Success"
           activity : "Resiliency Regression Automation"
           action: "Test"
-          service: "Resiliency-Automation-Pipeline"
-          environment: ${{ matrix.environment }}
-          location: ${{ matrix.location }}
-          author: "asmitha.durairaj@genesys.com"          
-          resiliencylog: "<a href='https://portal.azure.com/#blade/Microsoft_Azure_FileStorage/FileShareMenuBlade/overview/storageAccountId/%2Fsubscriptions%2F1649ee20-8f97-4941-be59-cb40e8aaafea%2FresourceGroups%2Fgroup-aks01-eastus2-dev-nodes%2Fproviders%2FMicrosoft.Storage%2FstorageAccounts%2Flogshareeastus2dev/path/logs/protocol/SMB'>RESILIENCY_Log_File_share_path</a> 
       
       - name: Delete helm chart
         if: ${{ always() }}
